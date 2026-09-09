@@ -271,22 +271,7 @@ ol.liste li::before{content:counter(rang) " ·";left:0}
 .separateur{height:1px;background:var(--trait-leger);margin:12px 0}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 
-/* ---------- Sommaire ---------- */
-.sommaire{width:min(1440px,100%);margin:0 auto;padding:40px;display:flex;flex-direction:column;gap:24px;
-          background:var(--fond-page);min-height:100vh}
-.sommaire .colonnes{display:flex;gap:24px}
-.sommaire .colonnes>.carte{flex:1}
-.sommaire ul{list-style:none;margin:0;padding:0}
-.sommaire li{border-bottom:1px solid var(--trait-leger)}
-.sommaire li:last-child{border-bottom:0}
-.sommaire li a{display:flex;align-items:center;gap:12px;padding:10px 0;
-               text-decoration:none;color:var(--texte-principal)}
-.sommaire li .code{width:40px;flex:none;font:500 11px/14px var(--police);color:var(--texte-secondaire)}
-.sommaire li .nom{flex:1;font:400 13px/18px var(--police)}
 .etiquette{border-radius:4px;padding:2px 8px;font:400 10px/14px var(--police)}
-.etiquette.trancher{background:var(--trancher-fond);color:var(--trancher)}
-.etiquette.fait{background:var(--valide-fond);color:var(--valide)}
-.etiquette.todo{background:var(--fond-sourd);color:var(--texte-secondaire)}
 /* Étiquette « hors Figma » : marque un contenu proposé par Galadrim qui ne figure
    dans aucun node de la maquette. Neutre à dessein — le violet « à trancher » reste
    réservé aux bandeaux repris du Figma au verbatim. */
@@ -322,35 +307,20 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
   .contenu{padding:14px}
   .barre{padding:12px 14px}
   .carte{padding:14px}
-  .sommaire{padding:20px}
-  .sommaire .colonnes{flex-direction:column}
 }
 </style>
 </head>
 <body>
 
-<!-- Sommaire : construit au chargement à partir des sections ci-dessous. -->
-<div class="sommaire" id="sommaire" hidden>
-  <header>
-    <h1 class="titre-section" style="margin:0">SAFICO · Application agence — prototype</h1>
-    <p class="secondaire" style="margin:4px 0 0">
-      Lot 1 · 24 écrans · mode normal uniquement · poste de travail 1440 × 800
-    </p>
-  </header>
-  <div class="colonnes">
-    <section class="carte"><h2>B · Envoyer</h2><ul id="liste-b"></ul></section>
-    <section class="carte"><h2>C · Payer</h2><ul id="liste-c"></ul></section>
-  </div>
-</div>
-
-<!-- Gabarit commun : rail + barre d'état. Le contenu de l'écran courant y est injecté. -->
-<div class="app" id="app" hidden>
+<!-- Gabarit commun : rail + barre d'état. Le contenu de l'écran courant y est injecté.
+     L'accueil guichet (B1) est la page d'accueil du prototype : sans ancre, c'est lui
+     qui s'ouvre. Il n'y a pas de sommaire — on entre par le guichet, comme l'agent. -->
+<div class="app" id="app">
   <nav class="rail">
     <div class="marque"><b>SAFICO</b><span>Agence Kaloum · Conakry</span></div>
     <div class="menu" id="menu"></div>
     <div class="agent">
       <b>Mamadou Camara</b><span>Guichetier · Caisse 3</span>
-      <a href="#sommaire">← Sommaire</a>
     </div>
   </nav>
   <div class="zone">
@@ -518,7 +488,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       <section class="carte">
         <h2>Destination et montant</h2>
         <p class="secondaire">Cet écran du Figma (node 8:98) portait les mêmes champs que la simulation : pays de destination, montant à envoyer, frais et taux appliqué. Il faisait doublon une fois la simulation placée en étape 1, et a été retiré du parcours plutôt que dupliqué.</p>
-        <p class="pied">Conservé au sommaire pour garder la trace de la correspondance avec le Figma. Son bandeau « Contrôle de plafond effectué à l'entame » ne pouvait pas tenir : les trois plafonds sont des plafonds par client, et aucun client n'est identifié à ce stade.</p>
+        <p class="pied">Conservé dans le fichier, à l'ancre #b3, pour garder la trace de la correspondance avec le Figma. Son bandeau « Contrôle de plafond effectué à l'entame » ne pouvait pas tenir : les trois plafonds sont des plafonds par client, et aucun client n'est identifié à ce stade.</p>
         <div class="actions"><a class="bouton primaire" href="#b2">Ouvrir l'étape 1 · Simulation</a></div>
       </section>
     </section>
@@ -1860,7 +1830,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 
 <script>
 /*
-  Navigation par ancre : #sommaire, puis #b1 … #c12.
+  Navigation par ancre : #b1 … #c12. Sans ancre, c'est l'accueil guichet (B1).
   Le rail et la barre d'état sont pilotés par les attributs data-* de chaque écran :
   data-rail (entrée active), data-titre et data-contexte (barre d'état).
 */
@@ -1937,39 +1907,19 @@ function pasAPas(courante) {
 }
 
 const ecrans = [...document.querySelectorAll('#ecrans .ecran')];
-const app = document.getElementById('app');
-const sommaire = document.getElementById('sommaire');
 const contenu = document.getElementById('contenu');
 
-// Sommaire
-for (const e of ecrans) {
-  const li = document.createElement('li');
-  const fait = e.dataset.fait === 'oui';
-  const etat = e.dataset.retire
-    ? '<span class="etiquette todo">retiré</span>'
-    : `<span class="etiquette ${fait ? 'fait' : 'todo'}">${fait ? 'construit' : 'à construire'}</span>`;
-  li.innerHTML = `<a href="#${e.id}">
-      <span class="code">${e.id.toUpperCase()}</span>
-      <span class="nom">${e.dataset.nom}</span>
-      ${e.dataset.trancher ? '<span class="etiquette trancher">à trancher</span>' : ''}
-      ${e.dataset.ajout ? `<span class="etiquette ajout" title="${e.dataset.ajout}">hors Figma</span>` : ''}
-      ${etat}
-    </a>`;
-  document.getElementById(e.id.startsWith('b') ? 'liste-b' : 'liste-c').append(li);
-}
+/*
+  L'accueil guichet est la page d'accueil : sans ancre — ou avec une ancre inconnue —
+  c'est B1 qui s'affiche. Les écrans que le parcours ne relie pas restent atteignables
+  par leur ancre directe (index.html#c5, #b3…), attributs data-* conservés pour le
+  registre : data-node, data-trancher, data-retire, data-ajout.
+*/
+const ACCUEIL = 'b1';
 
 function afficher() {
-  const code = location.hash.replace('#', '') || 'sommaire';
-  const ecran = ecrans.find((e) => e.id === code);
-
-  if (!ecran) {
-    sommaire.hidden = false;
-    app.hidden = true;
-    document.body.classList.remove('canevas');
-    return;
-  }
-  sommaire.hidden = true;
-  app.hidden = false;
+  const code = location.hash.replace('#', '');
+  const ecran = ecrans.find((e) => e.id === code) || ecrans.find((e) => e.id === ACCUEIL);
   document.body.classList.add('canevas');
 
   document.getElementById('barre-titre').textContent = ecran.dataset.titre;
