@@ -111,7 +111,7 @@ body.canevas{height:100vh;height:100dvh;overflow:hidden}
 /* Deux champs sur une même ligne. align-haut : sans quoi le champ sans aide
    s'étirerait à la hauteur de celui qui en a une. */
 .paire{display:flex;align-items:flex-start;gap:16px}
-.paire>.champ{flex:1;min-width:0}
+.paire>.champ{flex:var(--part,1) 1 0%;min-width:0}
 /* Sous-titre de carte, collé sous le titre. */
 .carte h2+.sous-titre{margin:-8px 0 12px;color:var(--texte-secondaire)}
 /* Sous-bloc à l'intérieur d'une carte, après un séparateur. */
@@ -164,6 +164,7 @@ body.canevas{height:100vh;height:100dvh;overflow:hidden}
 .bloc>span{font:500 11px/14px var(--police);color:var(--texte-secondaire)}
 /* Texte de bas de carte. */
 .carte .pied{margin:14px 0 0;color:var(--texte-secondaire)}
+.carte .pied+.champs{margin-top:14px}
 /* Carte qui énonce des raisons ou des règles : une phrase par ligne, sans valeur
    en regard — contrairement à .info. */
 .liste{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
@@ -177,6 +178,9 @@ body.canevas{height:100vh;height:100dvh;overflow:hidden}
 .segmente button:last-child{border-right:0}
 .segmente button.actif{background:var(--fond-inverse);color:var(--texte-inverse)}
 .segmente+.champs{margin-top:14px}
+/* Choix segmenté tenant lieu de champ : il prend la largeur du champ, options égales. */
+.champ>.segmente{display:flex}
+.champ>.segmente button{flex:1 1 0;min-width:0}
 
 /* Reçu miniature : la maquette le montre en 300 px de large, en ticket. */
 .recu{width:300px;max-width:100%;margin:0 auto;padding:14px;
@@ -198,6 +202,21 @@ body.canevas{height:100vh;height:100dvh;overflow:hidden}
 .recu .signatures span{display:block;font:400 10px/14px var(--police);
                        color:var(--texte-secondaire);margin-bottom:18px}
 .recu .signatures i{display:block;border-bottom:1px solid var(--trait-net)}
+/* Mention de l'exemplaire : n'apparaît que sur la feuille A4, qui en porte deux. */
+.recu .copie{margin:0 0 6px;text-align:right;font:500 10px/14px var(--police);
+             color:var(--texte-secondaire)}
+.recu:not(.a4) .copie{display:none}
+/* A4 dédoublé (retour client 10/09) : la feuille porte deux exemplaires l'un
+   au-dessus de l'autre, que le caissier coupe en deux. Chaque moitié est un A5
+   à l'italienne : les blocs du reçu s'y rangent sur deux colonnes. */
+.recu.a4{width:100%}
+.recu.a4 .exemplaire{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.recu.a4 .exemplaire>.copie,.recu.a4 .exemplaire>.entete,
+.recu.a4 .exemplaire>.signatures{grid-column:1/-1}
+/* Trait de coupe entre les deux exemplaires, bord à bord de la feuille. */
+.coupe{display:flex;align-items:center;gap:8px;margin:10px -14px 12px;
+       font:400 10px/14px var(--police);color:var(--texte-secondaire)}
+.coupe::before,.coupe::after{content:"";flex:1;border-top:1px dashed var(--trait-net)}
 
 /* Variante numérotée : le rang fait partie du contenu affiché. */
 ol.liste{counter-reset:rang}
@@ -208,6 +227,8 @@ ol.liste li::before{content:counter(rang) " ·";left:0}
 .carte>.bandeau+.champs{margin-top:14px}
 /* Ligne de boutons alignée à droite, en bas d'écran. */
 .actions.a-droite{justify-content:flex-end}
+/* Filtre en tête d'écran : un choix segmenté et la période qu'il couvre. */
+.filtre{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
 
 /* Pas-a-pas des 5 etapes de l'envoi, en tete de contenu. */
 .pas-a-pas{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
@@ -231,14 +252,20 @@ ol.liste li::before{content:counter(rang) " ·";left:0}
 
 .champ{display:flex;flex-direction:column;gap:6px}
 .champ>label{font:500 11px/14px var(--police);color:var(--texte-secondaire)}
-.champ>input,.champ>select{width:100%;min-width:0;
+/* Champ et bouton sur une même ligne : la recherche se lance à côté de la saisie,
+   pas en bas de carte. L'entrée y garde exactement l'apparence d'un champ. */
+.saisie-action{display:flex;gap:10px}
+.saisie-action>input{flex:1}
+.saisie-action>.bouton{flex:none}
+.champ>input,.champ>select,.saisie-action>input{width:100%;min-width:0;
         border:1px solid var(--trait-net);border-radius:5px;padding:11px 12px;
         background:var(--fond-surface);color:var(--texte-principal);font:400 14px/20px var(--police)}
-.champ>input::placeholder{color:var(--texte-secondaire)}
-.champ>input:focus{outline:none;border:2px solid var(--trait-actif);padding:10px 11px}
-.champ.erreur>input{border:1.5px solid var(--blocage);padding:10.5px 11.5px}
+.champ>input::placeholder,.saisie-action>input::placeholder{color:var(--texte-secondaire)}
+.champ>input:focus,.saisie-action>input:focus{outline:none;border:2px solid var(--trait-actif);padding:10px 11px}
+.champ.erreur>input,.champ.erreur .saisie-action>input{border:1.5px solid var(--blocage);padding:10.5px 11.5px}
 /* État Focus figé : la maquette montre un champ en focus, sans interaction réelle. */
-.champ.focus>input,.champ.focus>select{border:2px solid var(--trait-actif);padding:10px 11px}
+.champ.focus>input,.champ.focus>select,
+.champ.focus .saisie-action>input{border:2px solid var(--trait-actif);padding:10px 11px}
 .champ .aide{font:400 10px/14px var(--police);color:var(--texte-secondaire)}
 .champ.erreur .aide{color:var(--blocage)}
 
@@ -263,7 +290,8 @@ ol.liste li::before{content:counter(rang) " ·";left:0}
             font:500 11px/14px var(--police);color:var(--texte-secondaire)}
 .tableau td{padding:10px 0;border-bottom:1px solid var(--trait-leger);
             font:400 13px/18px var(--police)}
-.tableau tr:last-child td{border-bottom:0}
+.tableau tr:last-child td,
+.tableau tr:nth-last-child(1 of :not([hidden])) td{border-bottom:0}
 /* Ligne de tableau qui ouvre le détail de l'opération. */
 .tableau tr.ouvrable{cursor:pointer}
 .tableau tr.ouvrable:hover{background:var(--fond-sourd)}
@@ -272,9 +300,10 @@ ol.liste li::before{content:counter(rang) " ·";left:0}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 
 .etiquette{border-radius:4px;padding:2px 8px;font:400 10px/14px var(--police)}
-/* Étiquette « hors Figma » : marque un contenu proposé par Galadrim qui ne figure
-   dans aucun node de la maquette. Neutre à dessein — le violet « à trancher » reste
-   réservé aux bandeaux repris du Figma au verbatim. */
+/* Étiquette « proposition » : marque un contenu proposé par Galadrim qui ne figure
+   dans aucun node de la maquette. Le mot s'adresse au client, qui n'a jamais vu le
+   Figma ; la trace de l'origine reste dans data-ajout. Neutre à dessein — le violet
+   « à trancher » reste réservé aux bandeaux repris du Figma au verbatim. */
 .etiquette.ajout{background:var(--fond-sourd);color:var(--texte-secondaire)}
 .carte h2 .etiquette{margin-left:8px;vertical-align:2px;font-weight:400}
 
@@ -307,6 +336,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
   .contenu{padding:14px}
   .barre{padding:12px 14px}
   .carte{padding:14px}
+  /* Champs côte à côte empilés : un champ suivi de son bouton ne tient plus sur une
+     demi-largeur d'écran de téléphone. */
+  .paire{flex-direction:column;align-items:stretch}
 }
 </style>
 </head>
@@ -382,7 +414,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
              elle y répond sans ouvrir le parcours d'envoi. Elle n'accepte pas de
              montant : ce serait recréer B3, retiré pour doublon avec la simulation. -->
         <section class="carte">
-          <h2>Taux du jour <span class="etiquette ajout">hors Figma</span></h2>
+          <h2>Taux du jour <span class="etiquette ajout">proposition</span></h2>
           <div data-taux-jour></div>
           <p class="mention">Qui fixe le taux, quand il tombe, s'il est figé à la simulation, s'il porte une marge agence : non cadré.</p>
           <div class="actions"><a class="bouton secondaire" href="#b2">Simuler un montant</a></div>
@@ -413,7 +445,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </section>
     </section>
 
-    <section class="ecran" id="b2" data-nom="Simulation du taux et des frais" data-node="6:136" data-rail="Envoyer" data-titre="Simulation" data-etape="1" data-contexte="Étape 1 sur 5 · avant toute saisie, le client peut renoncer ici" data-fait="oui">
+    <section class="ecran" id="b2" data-nom="Simulation du taux et des frais" data-node="6:136" data-rail="Envoyer" data-titre="Simulation" data-etape="1" data-contexte="Étape 1 sur 5 · avant toute saisie, le client peut renoncer ici" data-trancher="Frais et taux sont-ils les mêmes pour les trois modes de réception ? Le wallet et le compte bancaire sont-ils ouverts sur toutes les destinations, ou sur les seuls corridors raccordés à un partenaire ?" data-fait="oui">
       <div class="ligne align-haut">
         <section class="carte" style="--part:520">
           <h2>Ce que le client demande</h2>
@@ -449,9 +481,18 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
               <input id="b2-montant" value="5 000 000 GNF">
               <span class="aide">Le client peut aussi partir du montant à recevoir</span>
             </div>
+            <!-- Remplace le champ « Canal de retrait » du Figma (retour client 10/09) :
+                 le mode se choisit avant le bénéficiaire, dont il change les champs. -->
             <div class="champ">
-              <label for="b2-canal">Canal de retrait</label>
-              <input id="b2-canal" value="Retrait en espèces en agence">
+              <label id="b2-mode">Mode de réception</label>
+              <div class="segmente" data-choix="mode" role="group" aria-labelledby="b2-mode">
+                <button class="actif" data-valeur="especes">Espèces en agence</button>
+                <button data-valeur="wallet">Wallet</button>
+                <button data-valeur="banque">Compte bancaire</button>
+              </div>
+              <span class="aide" data-si-mode="especes">Retrait au guichet sur présentation du code et d'une pièce d'identité</span>
+              <span class="aide" data-si-mode="wallet">Versement direct sur le wallet du bénéficiaire, via l'opérateur partenaire</span>
+              <span class="aide" data-si-mode="banque">Virement direct sur le compte du bénéficiaire, via la banque partenaire</span>
             </div>
           </div>
           <p class="pied">Aucune donnée client n'est saisie à ce stade.</p>
@@ -465,6 +506,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
             <div class="bloc"><span>Total à encaisser</span><b class="montant">5 045 000 GNF</b></div>
             <div class="info"><span>Taux appliqué</span><span data-taux>1 XOF = 18,32 GNF</span></div>
             <div class="bloc"><span>Le bénéficiaire reçoit</span><b class="montant" data-recoit>272 926 XOF</b></div>
+            <!-- Règle confirmée le 10/09 : le taux est fixé à l'envoi, jamais recalculé. -->
+            <p class="pied">Une fois l'envoi validé, le taux est bloqué <span data-si-mode="especes">jusqu'au retrait, quelle que soit sa date</span><span data-si-mode="wallet banque">jusqu'au versement, quelle que soit sa date</span> : aucun recalcul au paiement.</p>
           </section>
 
           <div class="bandeau attention">
@@ -730,7 +773,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
-    <section class="ecran" id="b7" data-nom="Envoi — étape 3 · Bénéficiaire (client connu)" data-node="11:436" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="3" data-contexte="Étape 3 sur 5 · le champ le plus critique du produit" data-trancher="Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre." data-fait="oui">
+    <section class="ecran" id="b7" data-nom="Envoi — étape 3 · Bénéficiaire (client connu)" data-node="11:436" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="3" data-contexte="Étape 3 sur 5 · le champ le plus critique du produit" data-trancher="Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre. — Wallet : le nom et le prénom du bénéficiaire sont gardés, alors que le retour du 10/09 ne cite que l'opérateur et le numéro ; sans eux, ni le reçu ni le filtrage conformité n'ont de bénéficiaire nommé. L'opérateur renvoie-t-il le nom du titulaire ? Listes des opérateurs et des banques raccordés, par pays, à fournir." data-fait="oui">
       <div class="ligne align-haut">
         <div class="colonne" style="--part:700">
           <section class="carte" data-vue="liste">
@@ -758,13 +801,17 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
             </div>
           </section>
 
+          <!-- Les champs dépendent du mode de réception choisi en B2 (retour client
+               10/09). En wallet ou en banque, la liste des destinataires précédents —
+               tous des retraits en espèces — cède la place au formulaire. -->
           <section class="carte" data-vue="formulaire" hidden>
-          <div class="actions retour-liste">
+          <div class="actions retour-liste" data-si-mode="especes">
             <button class="bouton discret" data-vue-liste>&larr; Retour à la liste</button>
           </div>
           <h2>Le bénéficiaire</h2>
+          <p class="sous-titre" data-si-mode="wallet banque">Mode de réception : <span data-si-mode="wallet">wallet</span><span data-si-mode="banque">compte bancaire</span> · choisi à l'étape 1</p>
           <div class="champs">
-            <div class="paire">
+            <div class="paire" data-si-mode="especes wallet">
               <div class="champ focus">
                 <label for="b7-nom">Nom</label>
                 <input id="b7-nom" value="TOURÉ" data-benef="nom">
@@ -775,12 +822,12 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
                 <input id="b7-prenom" value="Mariam" data-benef="prenom">
               </div>
             </div>
-            <div class="champ focus">
+            <div class="champ focus" data-si-mode="especes">
               <label for="b7-tel">Téléphone du bénéficiaire</label>
               <input id="b7-tel" value="+225 07 88 41 20" data-benef="tel">
               <span class="aide">C'est sur ce numéro que part le code de retrait</span>
             </div>
-            <div class="paire">
+            <div class="paire" data-si-mode="especes">
               <div class="champ">
                 <label for="b7-pays">Pays de retrait</label>
                 <input id="b7-pays" value="Côte d'Ivoire" data-benef="pays">
@@ -790,8 +837,39 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
                 <input id="b7-agence" value="Indifférente" data-benef="agence">
               </div>
             </div>
+            <div class="paire" data-si-mode="wallet">
+              <div class="champ">
+                <label for="b7-operateur">Opérateur</label>
+                <select id="b7-operateur" data-benef="operateur">
+                  <option selected>Orange Money</option>
+                  <option disabled>Autres opérateurs · liste à charger</option>
+                </select>
+                <span class="aide">Opérateurs raccordés au pays de destination</span>
+              </div>
+              <div class="champ">
+                <label for="b7-wallet">Numéro de wallet</label>
+                <input id="b7-wallet" value="+225 07 88 41 20" data-benef="wallet">
+                <span class="aide">Les fonds y sont versés directement</span>
+              </div>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7-banque">Banque</label>
+              <select id="b7-banque" data-benef="banque">
+                <option selected>Banque partenaire · démonstration</option>
+                <option disabled>Banques raccordées · liste à charger</option>
+              </select>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7-titulaire">Titulaire du compte</label>
+              <input id="b7-titulaire" value="TOURÉ Mariam" data-benef="titulaire">
+              <span class="aide">Tel qu'écrit sur le relevé d'identité bancaire</span>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7-compte">Numéro de compte ou IBAN</label>
+              <input id="b7-compte" value="CI93 CI00 8011 1301 1342 9120 0589" data-benef="compte">
+            </div>
           </div>
-          <div class="bandeau attention">
+          <div class="bandeau attention" data-si-mode="especes">
             <strong>Ce nom sera vérifié ailleurs</strong>
             <span>Une autre agence, parfois un autre pays, comparera ce nom à une pièce d'identité. Toute approximation devient un litige au guichet.</span>
           </div>
@@ -802,13 +880,23 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <section class="carte">
             <h2>Relecture avec l'expéditeur</h2>
             <p class="sous-titre">À lire à voix haute au client</p>
-            <div class="valeurs">
-              <b class="montant-petit" data-relu-nom>TOURÉ Mariam</b>
-              <b class="montant-petit" data-relu-tel>+225 07 88 41 20</b>
+            <div class="valeurs" data-si-mode="especes">
+              <b class="montant-petit" data-relu="nom prenom">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="tel">+225 07 88 41 20</b>
+            </div>
+            <div class="valeurs" data-si-mode="wallet">
+              <b class="montant-petit" data-relu="nom prenom">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="operateur wallet" data-sep=" · ">Orange Money · +225 07 88 41 20</b>
+            </div>
+            <div class="valeurs" data-si-mode="banque">
+              <b class="montant-petit" data-relu="titulaire">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="banque">Banque partenaire · démonstration</b>
+              <b class="montant-petit" data-relu="compte">CI93 CI00 8011 1301 1342 9120 0589</b>
             </div>
           </section>
 
-          <div class="bandeau trancher">
+          <!-- Question propre au retrait en espèces : sans objet en wallet ou en banque. -->
+          <div class="bandeau trancher" data-si-mode="especes">
             <strong>Bénéficiaire sans téléphone</strong>
             <span>Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre.</span>
           </div>
@@ -821,14 +909,16 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
-    <section class="ecran" id="b7n" data-nom="Envoi — étape 3 · Bénéficiaire (nouveau client)" data-node="11:436" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="3" data-contexte="Étape 3 sur 5 · premier envoi pour ce client" data-trancher="Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre." data-fait="oui">
+    <section class="ecran" id="b7n" data-nom="Envoi — étape 3 · Bénéficiaire (nouveau client)" data-node="11:436" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="3" data-contexte="Étape 3 sur 5 · premier envoi pour ce client" data-trancher="Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre. — Wallet : le nom et le prénom du bénéficiaire sont gardés, alors que le retour du 10/09 ne cite que l'opérateur et le numéro ; sans eux, ni le reçu ni le filtrage conformité n'ont de bénéficiaire nommé. L'opérateur renvoie-t-il le nom du titulaire ? Listes des opérateurs et des banques raccordés, par pays, à fournir." data-fait="oui">
       <div class="ligne align-haut">
         <section class="carte" style="--part:700">
           <p class="mention">Aucun destinataire enregistré · premier envoi pour ce client</p>
           <div class="separateur"></div>
+          <!-- Mêmes champs par mode de réception qu'en B7 (retour client 10/09). -->
           <h2>Le bénéficiaire</h2>
+          <p class="sous-titre" data-si-mode="wallet banque">Mode de réception : <span data-si-mode="wallet">wallet</span><span data-si-mode="banque">compte bancaire</span> · choisi à l'étape 1</p>
           <div class="champs">
-            <div class="paire">
+            <div class="paire" data-si-mode="especes wallet">
               <div class="champ focus">
                 <label for="b7n-nom">Nom</label>
                 <input id="b7n-nom" value="TOURÉ" data-benef="nom">
@@ -839,12 +929,12 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
                 <input id="b7n-prenom" value="Mariam" data-benef="prenom">
               </div>
             </div>
-            <div class="champ focus">
+            <div class="champ focus" data-si-mode="especes">
               <label for="b7n-tel">Téléphone du bénéficiaire</label>
               <input id="b7n-tel" value="+225 07 88 41 20" data-benef="tel">
               <span class="aide">C'est sur ce numéro que part le code de retrait</span>
             </div>
-            <div class="paire">
+            <div class="paire" data-si-mode="especes">
               <div class="champ">
                 <label for="b7n-pays">Pays de retrait</label>
                 <input id="b7n-pays" value="Côte d'Ivoire" data-benef="pays">
@@ -854,8 +944,39 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
                 <input id="b7n-agence" value="Indifférente" data-benef="agence">
               </div>
             </div>
+            <div class="paire" data-si-mode="wallet">
+              <div class="champ">
+                <label for="b7n-operateur">Opérateur</label>
+                <select id="b7n-operateur" data-benef="operateur">
+                  <option selected>Orange Money</option>
+                  <option disabled>Autres opérateurs · liste à charger</option>
+                </select>
+                <span class="aide">Opérateurs raccordés au pays de destination</span>
+              </div>
+              <div class="champ">
+                <label for="b7n-wallet">Numéro de wallet</label>
+                <input id="b7n-wallet" value="+225 07 88 41 20" data-benef="wallet">
+                <span class="aide">Les fonds y sont versés directement</span>
+              </div>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7n-banque">Banque</label>
+              <select id="b7n-banque" data-benef="banque">
+                <option selected>Banque partenaire · démonstration</option>
+                <option disabled>Banques raccordées · liste à charger</option>
+              </select>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7n-titulaire">Titulaire du compte</label>
+              <input id="b7n-titulaire" value="TOURÉ Mariam" data-benef="titulaire">
+              <span class="aide">Tel qu'écrit sur le relevé d'identité bancaire</span>
+            </div>
+            <div class="champ" data-si-mode="banque">
+              <label for="b7n-compte">Numéro de compte ou IBAN</label>
+              <input id="b7n-compte" value="CI93 CI00 8011 1301 1342 9120 0589" data-benef="compte">
+            </div>
           </div>
-          <div class="bandeau attention">
+          <div class="bandeau attention" data-si-mode="especes">
             <strong>Ce nom sera vérifié ailleurs</strong>
             <span>Une autre agence, parfois un autre pays, comparera ce nom à une pièce d'identité. Toute approximation devient un litige au guichet.</span>
           </div>
@@ -865,13 +986,23 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <section class="carte">
             <h2>Relecture avec l'expéditeur</h2>
             <p class="sous-titre">À lire à voix haute au client</p>
-            <div class="valeurs">
-              <b class="montant-petit" data-relu-nom>TOURÉ Mariam</b>
-              <b class="montant-petit" data-relu-tel>+225 07 88 41 20</b>
+            <div class="valeurs" data-si-mode="especes">
+              <b class="montant-petit" data-relu="nom prenom">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="tel">+225 07 88 41 20</b>
+            </div>
+            <div class="valeurs" data-si-mode="wallet">
+              <b class="montant-petit" data-relu="nom prenom">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="operateur wallet" data-sep=" · ">Orange Money · +225 07 88 41 20</b>
+            </div>
+            <div class="valeurs" data-si-mode="banque">
+              <b class="montant-petit" data-relu="titulaire">TOURÉ Mariam</b>
+              <b class="montant-petit" data-relu="banque">Banque partenaire · démonstration</b>
+              <b class="montant-petit" data-relu="compte">CI93 CI00 8011 1301 1342 9120 0589</b>
             </div>
           </section>
 
-          <div class="bandeau trancher">
+          <!-- Question propre au retrait en espèces : sans objet en wallet ou en banque. -->
+          <div class="bandeau trancher" data-si-mode="especes">
             <strong>Bénéficiaire sans téléphone</strong>
             <span>Le code part par SMS. Si le bénéficiaire n'a pas de numéro, c'est l'expéditeur qui le transmet — et le parcours change. Ligne ouverte au registre.</span>
           </div>
@@ -884,7 +1015,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
-    <section class="ecran" id="b8" data-nom="Envoi — étape 4 · Récapitulatif" data-node="11:595" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="4" data-contexte="Étape 4 sur 5 · dernier point de renoncement pour le client" data-fait="oui">
+    <section class="ecran" id="b8" data-nom="Envoi — étape 4 · Récapitulatif" data-node="11:595" data-rail="Envoyer" data-titre="Nouvel envoi" data-etape="4" data-contexte="Étape 4 sur 5 · dernier point de renoncement pour le client" data-trancher="Paiement direct (wallet, banque) : le versement part-il à la validation de l'encaissement ? Que se passe-t-il s'il échoue — nouvel essai, bascule en retrait espèces, remboursement de l'expéditeur ? Peut-on annuler un versement direct ?" data-fait="oui">
       <div class="ligne align-haut">
         <section class="carte">
           <h2>Expéditeur</h2>
@@ -893,18 +1024,26 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <div class="info"><span>Pièce</span><span>CNI · GN-4471029</span></div>
           <div class="info"><span>Statut</span><span>Cliente connue</span></div>
         </section>
+        <!-- Le mode de réception est lu en clair au client (retour client 10/09). -->
         <section class="carte">
           <h2>Bénéficiaire</h2>
-          <div class="info"><span>Nom</span><span>TOURÉ Mariam</span></div>
-          <div class="info"><span>Téléphone</span><span>+225 07 88 41 20</span></div>
+          <div class="info"><span>Réception</span><span data-si-mode="especes">Retrait en espèces en agence</span><span data-si-mode="wallet">Wallet · versement direct</span><span data-si-mode="banque">Compte bancaire · virement direct</span></div>
+          <div class="info" data-si-mode="especes wallet"><span>Nom</span><span>TOURÉ Mariam</span></div>
+          <div class="info" data-si-mode="especes"><span>Téléphone</span><span>+225 07 88 41 20</span></div>
+          <div class="info" data-si-mode="wallet"><span>Opérateur</span><span>Orange Money</span></div>
+          <div class="info" data-si-mode="wallet"><span>Numéro de wallet</span><span>+225 07 88 41 20</span></div>
+          <div class="info" data-si-mode="banque"><span>Titulaire</span><span>TOURÉ Mariam</span></div>
+          <div class="info" data-si-mode="banque"><span>Banque</span><span>Banque partenaire · démonstration</span></div>
+          <div class="info" data-si-mode="banque"><span>Compte</span><span>CI93 CI00 8011 1301 1342 9120 0589</span></div>
           <div class="info"><span>Pays</span><span>Côte d'Ivoire</span></div>
-          <div class="info"><span>Agence</span><span>Indifférente</span></div>
+          <div class="info" data-si-mode="especes"><span>Agence</span><span>Indifférente</span></div>
         </section>
         <section class="carte">
           <h2>Opération</h2>
           <div class="info"><span>Montant envoyé</span><span>5 000 000 GNF</span></div>
           <div class="info"><span>Frais</span><span>45 000 GNF</span></div>
           <div class="info"><span>Taux</span><span>1 XOF = 18,32 GNF</span></div>
+          <div class="info"><span>Taux bloqué</span><span data-si-mode="especes">Jusqu'au retrait</span><span data-si-mode="wallet banque">Jusqu'au versement</span></div>
           <div class="info"><span>Reçu par le bénéficiaire</span><span>272 926 XOF</span></div>
         </section>
       </div>
@@ -915,11 +1054,19 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <div class="valeurs"><b class="montant">5 045 000 GNF</b></div>
           <p class="pied">Rien n'est enregistré tant que les espèces ne sont pas encaissées. Le client peut encore renoncer sans conséquence.</p>
         </section>
-        <section class="carte" style="--part:476">
+        <section class="carte" style="--part:476" data-si-mode="especes">
           <h2>Validité du transfert</h2>
           <div class="info"><span>Expiration</span><span>30 jours</span></div>
           <div class="info"><span>Passé ce délai</span><span>Remboursement de l'expéditeur</span></div>
           <div class="info"><span>Annulation possible</span><span>Tant que le retrait n'a pas eu lieu</span></div>
+        </section>
+        <!-- Variante supposée du paiement direct : ni retrait, ni code, ni délai de
+             30 jours. Ce qui arrive si le partenaire refuse le versement n'est pas écrit. -->
+        <section class="carte" style="--part:476" data-si-mode="wallet banque">
+          <h2>Paiement direct</h2>
+          <div class="info"><span>Versement</span><span>Par l'API du partenaire, à la validation</span></div>
+          <div class="info"><span>Retrait au guichet</span><span>Aucun · pas de code de retrait</span></div>
+          <div class="info"><span>Si le versement échoue</span><span>À définir</span></div>
         </section>
       </div>
 
@@ -964,7 +1111,10 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
             <h2>Ce qui suit</h2>
             <ol class="liste">
               <li>La transaction est créée et référencée.</li>
-              <li>Le code de retrait part par SMS au bénéficiaire.</li>
+              <!-- L'encaissement est le même quel que soit le mode ; seule la suite change. -->
+              <li data-si-mode="especes">Le code de retrait part par SMS au bénéficiaire.</li>
+              <li data-si-mode="wallet">Les fonds partent vers le wallet du bénéficiaire, via l'opérateur.</li>
+              <li data-si-mode="banque">Les fonds partent vers le compte du bénéficiaire, via la banque partenaire.</li>
               <li>Le reçu est prévisualisé, puis imprimé et signé.</li>
             </ol>
           </section>
@@ -990,33 +1140,36 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </section>
     </section>
 
-    <section class="ecran" id="b11" data-nom="Envoi — reçu, impression ou envoi" data-node="12:602 + 12:761" data-rail="Envoyer" data-titre="Reçu de l'envoi" data-contexte="Prévisualisation · impression ou envoi au client" data-trancher="Sans impression, il n'y a pas de signature manuscrite. La signature électronique proposée par SAFICO est hors du chiffrage actuel, et ce qui fait foi devant la BCRG reste à confirmer." data-fait="oui">
+    <section class="ecran" id="b11" data-nom="Envoi — reçu, impression ou envoi" data-node="12:602 + 12:761" data-rail="Envoyer" data-titre="Reçu de l'envoi" data-contexte="Prévisualisation · impression ou envoi au client" data-trancher="Sans impression, il n'y a pas de signature manuscrite. La signature électronique proposée par SAFICO est hors du chiffrage actuel, et ce qui fait foi devant la BCRG reste à confirmer. — Paiement direct (wallet, banque) : reçu supposé sans code ni validité de 30 jours. Doit-il porter la preuve du versement (identifiant de transaction du partenaire), et peut-il être remis avant que le partenaire ait confirmé ? — En ticket, l'exemplaire agence s'obtient-il par une seconde impression automatique ou à la demande ?" data-fait="oui">
       <div class="ligne align-haut">
         <div class="colonne" style="--part:700">
-          <section class="carte" data-panneau="imprimer">
+          <!-- Format vivant (retour client 10/09) : en A4, deux exemplaires sur la même
+               feuille, que le caissier coupe en deux ; en ticket, un seul exemplaire. -->
+          <section class="carte" data-si-canal="imprimer">
             <h2>Format d'impression</h2>
-            <div class="segmente">
-              <button class="actif">Ticket 58 mm</button>
-              <button>Ticket 80 mm</button>
-              <button>A4</button>
+            <div class="segmente" data-choix="format">
+              <button class="actif" data-valeur="58" data-imprimante="Comptoir 3 · thermique 58 mm">Ticket 58 mm</button>
+              <button data-valeur="80" data-imprimante="Comptoir 3 · thermique 80 mm">Ticket 80 mm</button>
+              <button data-valeur="a4" data-imprimante="Comptoir 3 · A4">A4</button>
             </div>
             <p class="pied">La mise en page s'adapte automatiquement au format détecté.</p>
             <div class="champs">
               <div class="champ">
                 <label for="b11-imprimante">Imprimante</label>
-                <input id="b11-imprimante" value="Comptoir 3 · thermique 58 mm">
+                <input id="b11-imprimante" value="Comptoir 3 · thermique 58 mm" data-champ-imprimante>
               </div>
             </div>
-            <div class="info"><span>Exemplaires</span><span>2 · client et agence</span></div>
+            <div class="info" data-si-format="58 80"><span>Exemplaires</span><span>1 · réimpression libre</span></div>
+            <div class="info" data-si-format="a4"><span>Exemplaires</span><span>2 sur la feuille · client et agence, à couper</span></div>
           </section>
 
           <section class="carte">
             <h2>Transmission</h2>
-            <div class="segmente">
-              <button class="actif" data-canal="imprimer">Imprimer</button>
-              <button data-canal="whatsapp">Envoyer par WhatsApp</button>
+            <div class="segmente" data-choix="canal">
+              <button class="actif" data-valeur="imprimer">Imprimer</button>
+              <button data-valeur="whatsapp">Envoyer par WhatsApp</button>
             </div>
-            <div data-panneau="whatsapp" hidden>
+            <div data-si-canal="whatsapp" hidden>
               <div class="champs">
                 <div class="champ focus">
                   <label for="b11-numero">Numéro WhatsApp</label>
@@ -1048,7 +1201,10 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         <div class="colonne" style="--part:476">
         <section class="carte">
           <h2>Aperçu</h2>
-          <div class="recu">
+          <!-- Un seul exemplaire écrit ici : en A4, le second est cloné par le JS. -->
+          <div class="recu" data-recu data-copies="Exemplaire client|Exemplaire agence">
+            <div class="exemplaire">
+            <p class="copie"></p>
             <div class="entete">
               <b>SAFICO</b>
               <span>Agence Kaloum · Conakry</span>
@@ -1063,21 +1219,28 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
               <div class="l"><span>Expéditeur</span><span>BALDÉ Fatoumata</span></div>
               <div class="l"><span>Bénéficiaire</span><span>TOURÉ Mariam</span></div>
               <div class="l"><span>Destination</span><span>Côte d'Ivoire</span></div>
+              <div class="l"><span>Réception</span><span data-si-mode="especes">Espèces en agence</span><span data-si-mode="wallet">Wallet · Orange Money</span><span data-si-mode="banque">Compte bancaire</span></div>
+              <div class="l" data-si-mode="wallet"><span>N° de wallet</span><span>+225 07 88 41 20</span></div>
+              <div class="l" data-si-mode="banque"><span>Compte</span><span>CI93 CI00 8011 1301 1342 9120 0589</span></div>
             </div>
             <div class="bloc-recu">
               <div class="l"><span>Montant envoyé</span><span>5 000 000 GNF</span></div>
               <div class="l"><span>Frais</span><span>45 000 GNF</span></div>
               <div class="l"><span>Total encaissé</span><span>5 045 000 GNF</span></div>
               <div class="l"><span>Taux</span><span>1 XOF = 18,32 GNF</span></div>
+              <div class="l"><span>Taux bloqué</span><span data-si-mode="especes">Jusqu'au retrait</span><span data-si-mode="wallet banque">Jusqu'au versement</span></div>
               <div class="l"><span>À recevoir</span><span>272 926 XOF</span></div>
             </div>
             <div class="bloc-recu mentions">
-              <p>Validité 30 jours. Retrait sur présentation du code et d'une pièce d'identité en cours de validité.</p>
+              <p data-si-mode="especes">Validité 30 jours. Retrait sur présentation du code et d'une pièce d'identité en cours de validité.</p>
+              <p data-si-mode="wallet">Versement direct sur le wallet du bénéficiaire : ni retrait au guichet, ni code de retrait.</p>
+              <p data-si-mode="banque">Virement direct sur le compte du bénéficiaire : ni retrait au guichet, ni code de retrait.</p>
               <p>Mentions légales BCRG — à compléter</p>
             </div>
             <div class="bloc-recu signatures">
               <div><span>Le guichetier</span><i></i></div>
               <div><span>Le client</span><i></i></div>
+            </div>
             </div>
           </div>
         </section>
@@ -1107,10 +1270,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </section>
     </section>
 
-    <section class="ecran" id="b13" data-nom="Envoi — confirmation finale" data-node="(hors Figma)" data-rail="Envoyer" data-titre="Envoi terminé" data-contexte="Référence SFC-8F42-1907 · reçu remis au client" data-fait="oui">
+    <section class="ecran" id="b13" data-nom="Envoi — confirmation finale" data-node="(hors Figma)" data-rail="Envoyer" data-titre="Envoi terminé" data-contexte="Référence SFC-8F42-1907 · reçu remis au client" data-trancher="Paiement direct (wallet, banque) : confirmation supposée « versement transmis au partenaire ». Le guichetier attend-il la confirmation du partenaire avant de libérer le client ? Quel statut porte l'opération — les cinq statuts actuels supposent tous un retrait ?" data-fait="oui">
       <div class="bandeau valide">
         <strong>Opération enregistrée et caisse mise à jour</strong>
-        <span>Le transfert existe, la caisse est à jour et le reçu a été remis à l'expéditeur.</span>
+        <span data-si-mode="especes">Le transfert existe, la caisse est à jour et le reçu a été remis à l'expéditeur.</span>
+        <span data-si-mode="wallet banque">Le versement est transmis au partenaire, la caisse est à jour et le reçu a été remis à l'expéditeur.</span>
       </div>
 
       <div class="ligne align-haut">
@@ -1119,6 +1283,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <div class="info"><span>Expéditeur</span><span>BALDÉ Fatoumata</span></div>
           <div class="info"><span>Bénéficiaire</span><span>TOURÉ Mariam</span></div>
           <div class="info"><span>Destination</span><span>Côte d'Ivoire</span></div>
+          <div class="info"><span>Réception</span><span data-si-mode="especes">Retrait en espèces en agence</span><span data-si-mode="wallet">Wallet · Orange Money · +225 07 88 41 20</span><span data-si-mode="banque">Compte bancaire · CI93 CI00 8011 1301 1342 9120 0589</span></div>
           <div class="separateur"></div>
           <div class="info"><span>Montant envoyé</span><span>5 000 000 GNF</span></div>
           <div class="info"><span>Total encaissé</span><b class="montant-petit">5 045 000 GNF</b></div>
@@ -1130,7 +1295,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <div class="info"><span>Reçu papier</span><span>2 exemplaires signés</span></div>
           <div class="info"><span>Référence</span><span>SFC-8F42-1907</span></div>
           <div class="info"><span>Notification</span><span>SMS à chaque étape</span></div>
-          <p class="pied">L'expéditeur sera prévenu au retrait et en cas d'annulation.</p>
+          <p class="pied" data-si-mode="especes">L'expéditeur sera prévenu au retrait et en cas d'annulation.</p>
+          <p class="pied" data-si-mode="wallet banque">L'expéditeur sera prévenu du versement, et en cas d'échec.</p>
         </section>
       </div>
 
@@ -1140,41 +1306,38 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
-    <section class="ecran" id="c1" data-nom="Retrait — saisie du code" data-node="13:2" data-rail="Payer" data-titre="Payer un retrait" data-contexte="Deux facteurs cumulatifs : le code et la pièce d'identité" data-fait="oui">
+    <!-- C1 et C2 ne font plus qu'un écran (retour client 10/09) : un champ unique qui
+         accepte le code de retrait, la référence ou le téléphone, et son bouton de
+         recherche à côté. C2 « code invalide » est l'état d'erreur de ce champ : les
+         blocs data-si-etat="erreur" viennent du node 13:115. -->
+    <section class="ecran" id="c1" data-nom="Retrait — recherche de l'opération" data-node="13:2 + 13:115" data-rail="Payer" data-titre="Payer un retrait" data-contexte="Deux facteurs cumulatifs : le code et la pièce d'identité" data-trancher="Nombre de tentatives avant blocage, durée du verrouillage, et qui le lève. — Une opération retrouvée par référence ou par téléphone se paie-t-elle sans le code ? Si oui, le code cesse d'être un facteur et la pièce reste seule. — Le téléphone cherché est supposé être celui du bénéficiaire : faut-il accepter celui de l'expéditeur ? — Plusieurs opérations en attente pour un même numéro : faut-il une liste de choix ?" data-fait="oui">
+      <div class="bandeau blocage" data-si-etat="erreur">
+        <strong data-erreur-titre>Code inconnu ou déjà utilisé</strong>
+        <span data-erreur-texte>Aucune opération en attente de retrait ne correspond à ce code dans le réseau SAFICO.</span>
+      </div>
+
       <div class="ligne align-haut">
         <section class="carte" style="--part:700">
-          <h2>Code de retrait</h2>
-          <div class="champs">
+          <h2>Rechercher l'opération</h2>
+          <form class="champs" data-recherche="retrait" novalidate>
             <div class="champ focus">
-              <label for="c1-code">Code communiqué par le bénéficiaire</label>
-              <select id="c1-code" data-code>
-                <option data-cible="c3">8 4 2 · 0 9 1 — code valide</option>
-                <option data-cible="c2">8 4 2 · 0 9 3 — code invalide</option>
-                <option data-cible="c12">8 4 1 · 7 7 0 — opération non payable</option>
-              </select>
-              <span class="aide">Reçu par SMS sur le téléphone du bénéficiaire</span>
-            </div>
-          </div>
-          <p class="pied">Le code seul ne donne pas accès aux fonds. La pièce d'identité du bénéficiaire est vérifiée à l'étape suivante.</p>
-          <div class="separateur"></div>
-          <h3 class="sous-bloc">Recherche de secours</h3>
-          <div class="champs">
-            <div class="paire">
-              <div class="champ">
-                <label for="c1-reference">Référence de l'opération</label>
-                <input id="c1-reference" placeholder="SFC-">
-                <span class="aide">Utilisée uniquement quand le bénéficiaire présente le reçu sans avoir reçu le code.</span>
+              <label for="c1-code">Code de retrait, référence ou téléphone</label>
+              <div class="saisie-action">
+                <input id="c1-code" value="8 4 2 · 0 9 1" autocomplete="off" data-cle-recherche data-erreur-demo="8 4 2 · 0 9 3">
+                <button class="bouton primaire" type="submit">Rechercher</button>
               </div>
-              <div class="champ">
-                <label for="c1-telephone">Téléphone du bénéficiaire</label>
-                <input id="c1-telephone" placeholder="+224">
-                <span class="aide">Quand le bénéficiaire n'a reçu aucun code et n'a pas son reçu.</span>
-              </div>
+              <span class="aide" data-cle-aide>Code de retrait · reçu par SMS sur le téléphone du bénéficiaire</span>
             </div>
+          </form>
+          <p class="pied" data-si-etat="saisie">Le code seul ne donne pas accès aux fonds. La pièce d'identité du bénéficiaire est vérifiée à l'étape suivante.</p>
+          <div data-si-etat="erreur">
+            <div class="separateur"></div>
+            <div class="info"><span>Tentatives sur ce poste</span><span>2</span></div>
+            <p class="pied">Le caissier ne voit jamais si le code existe ailleurs, ni à quelle opération il appartient.</p>
           </div>
         </section>
 
-        <div class="colonne" style="--part:476">
+        <div class="colonne" style="--part:476" data-si-etat="saisie">
           <section class="carte">
             <h2>Ce que le caissier vérifie</h2>
             <div class="info"><span>1 · Le code</span><span>Saisi par le caissier</span></div>
@@ -1189,35 +1352,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
             <div class="info"><span>Traçabilité</span><span>Chaque réaffichage est journalisé</span></div>
           </section>
         </div>
-      </div>
 
-      <div class="actions a-droite">
-        <a class="bouton discret" href="#b1">Annuler</a>
-        <a class="bouton primaire" href="#c3" data-code-action>Rechercher l'opération</a>
-      </div>
-    </section>
-
-    <section class="ecran" id="c2" data-nom="Retrait — code invalide" data-node="13:115" data-rail="Payer" data-titre="Payer un retrait" data-contexte="Le code saisi ne correspond à aucune opération payable" data-trancher="Nombre de tentatives avant blocage, durée du verrouillage, et qui le lève." data-fait="oui">
-      <div class="bandeau blocage">
-        <strong>Code inconnu ou déjà utilisé</strong>
-        <span>Aucune opération en attente de retrait ne correspond à ce code dans le réseau SAFICO.</span>
-      </div>
-
-      <div class="ligne align-haut">
-        <section class="carte" style="--part:700">
-          <h2>Code de retrait</h2>
-          <div class="champs">
-            <div class="champ erreur">
-              <label for="c2-code">Code communiqué par le bénéficiaire</label>
-              <input id="c2-code" value="8 4 2 · 0 9 3">
-              <span class="aide">Vérifier le SMS reçu par le bénéficiaire avant de resaisir</span>
-            </div>
-          </div>
-          <div class="info"><span>Tentatives sur ce poste</span><span>2</span></div>
-          <p class="pied">Le caissier ne voit jamais si le code existe ailleurs, ni à quelle opération il appartient.</p>
-        </section>
-
-        <div class="colonne" style="--part:476">
+        <div class="colonne" style="--part:476" data-si-etat="erreur">
           <div class="bandeau trancher">
             <strong>Combien de tentatives avant blocage ?</strong>
             <span>Le nombre d'essais, la durée du verrouillage et la personne qui le lève ne sont pas définis. Cas limite du parcours 9, resté ouvert.</span>
@@ -1235,10 +1371,14 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
 
       <div class="actions a-droite">
-        <a class="bouton secondaire" href="#c10">Rechercher par référence</a>
-        <a class="bouton primaire" href="#c1">Ressaisir le code</a>
+        <a class="bouton discret" href="#b1">Annuler</a>
       </div>
     </section>
+
+    <!-- C2 n'est plus un écran : c'est C1 dans son état d'erreur (retour client 10/09).
+         L'ancre #c2 reste valide pour les liens déjà envoyés ; elle garde le node
+         13:115 et la question « à trancher » au registre. -->
+    <section class="ecran" id="c2" data-alias="c1" data-etat="erreur" data-nom="Retrait — opération introuvable (état d'erreur de C1)" data-node="13:115" data-rail="Payer" data-titre="Payer un retrait" data-contexte="La saisie ne correspond à aucune opération payable" data-trancher="Nombre de tentatives avant blocage, durée du verrouillage, et qui le lève." data-fait="oui"></section>
 
     <section class="ecran" id="c3" data-nom="Retrait — opération trouvée" data-node="14:201" data-rail="Payer" data-titre="Payer un retrait" data-contexte="SFC-7C10-4482 · transfert reçu d'Abidjan, en attente de retrait" data-fait="oui">
       <div class="ligne align-haut">
@@ -1255,6 +1395,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
           <h2>À remettre en espèces</h2>
           <div class="valeurs"><b class="montant">5 000 000 GNF</b></div>
           <div class="info"><span>Envoyé depuis</span><span>272 926 XOF</span></div>
+          <!-- Règle confirmée le 10/09 : le taux de l'envoi vaut au retrait, sans recalcul. -->
+          <div class="info"><span>Taux bloqué à l'envoi</span><span>1 XOF = 18,32 GNF</span></div>
           <div class="info"><span>Retrait partiel</span><span>Impossible</span></div>
           <p class="pied">Le montant est remis en une seule fois, ou pas du tout.</p>
         </section>
@@ -1548,26 +1690,34 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
     <section class="ecran" id="c9" data-nom="Retrait — reçu de retrait" data-node="15:523" data-rail="Payer" data-titre="Reçu de retrait" data-contexte="Prévisualisation · 2 exemplaires signés" data-fait="oui">
       <div class="ligne align-haut">
         <div class="colonne" style="--part:700">
-          <section class="carte" data-panneau="imprimer">
+          <!-- Choix du format ajouté (retour client 10/09) : même logique qu'en B11,
+               deux exemplaires sur la feuille en A4, un seul en ticket. -->
+          <section class="carte" data-si-canal="imprimer">
             <h2>Format d'impression</h2>
+            <div class="segmente" data-choix="format">
+              <button class="actif" data-valeur="58" data-imprimante="Comptoir 3 · thermique 58 mm">Ticket 58 mm</button>
+              <button data-valeur="80" data-imprimante="Comptoir 3 · thermique 80 mm">Ticket 80 mm</button>
+              <button data-valeur="a4" data-imprimante="Comptoir 3 · A4">A4</button>
+            </div>
             <div class="champs">
               <div class="champ">
                 <label for="c9-imprimante">Imprimante</label>
-                <input id="c9-imprimante" value="Comptoir 3 · thermique 58 mm">
+                <input id="c9-imprimante" value="Comptoir 3 · thermique 58 mm" data-champ-imprimante>
               </div>
             </div>
-            <div class="info"><span>Exemplaires</span><span>2 · bénéficiaire et agence</span></div>
+            <div class="info" data-si-format="58 80"><span>Exemplaires</span><span>1 · réimpression libre</span></div>
+            <div class="info" data-si-format="a4"><span>Exemplaires</span><span>2 sur la feuille · bénéficiaire et agence, à couper</span></div>
             <div class="info"><span>Réimpression</span><span>Possible sans restriction</span></div>
             <p class="pied">Le reçu de retrait est le document que le bénéficiaire emporte. Il vaut preuve de remise des espèces.</p>
           </section>
 
           <section class="carte">
             <h2>Transmission</h2>
-            <div class="segmente">
-              <button class="actif" data-canal="imprimer">Imprimer</button>
-              <button data-canal="whatsapp">Envoyer par WhatsApp</button>
+            <div class="segmente" data-choix="canal">
+              <button class="actif" data-valeur="imprimer">Imprimer</button>
+              <button data-valeur="whatsapp">Envoyer par WhatsApp</button>
             </div>
-            <div data-panneau="whatsapp" hidden>
+            <div data-si-canal="whatsapp" hidden>
               <div class="champs">
                 <div class="champ focus">
                   <label for="c9-numero">Numéro WhatsApp</label>
@@ -1588,7 +1738,10 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         <div class="colonne" style="--part:476">
         <section class="carte">
           <h2>Aperçu</h2>
-          <div class="recu">
+          <!-- Un seul exemplaire écrit ici : en A4, le second est cloné par le JS. -->
+          <div class="recu" data-recu data-copies="Exemplaire bénéficiaire|Exemplaire agence">
+            <div class="exemplaire">
+            <p class="copie"></p>
             <div class="entete">
               <b>SAFICO</b>
               <span>Agence Kaloum · Conakry</span>
@@ -1616,6 +1769,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
             <div class="bloc-recu signatures">
               <div><span>Le guichetier</span><i></i></div>
               <div><span>Le bénéficiaire</span><i></i></div>
+            </div>
             </div>
           </div>
         </section>
@@ -1662,22 +1816,25 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
-    <section class="ecran" id="c10" data-nom="Recherche d'une transaction" data-node="15:672" data-rail="Transactions" data-titre="Transactions" data-contexte="L'écran le plus sollicité après la saisie" data-fait="oui">
+    <!-- Les trois clés de recherche de C1 s'appliquent ici aussi (retour client 10/09) :
+         « Référence » et « Téléphone » fusionnent dans le champ unique, qui accepte en
+         plus le code de retrait. Le nom du client reste un champ à part. -->
+    <section class="ecran" id="c10" data-nom="Recherche d'une transaction" data-node="15:672" data-rail="Transactions" data-titre="Transactions" data-contexte="L'écran le plus sollicité après la saisie" data-trancher="Chercher par code de retrait montre à quelle opération appartient un code — ce que C2 exclut : « Le caissier ne voit jamais si le code existe ailleurs, ni à quelle opération il appartient. » Faut-il réserver la recherche par code au paiement (C1) ?" data-fait="oui">
       <section class="carte">
         <h2>Rechercher</h2>
-        <div class="champs">
+        <form class="champs" data-recherche="transactions" novalidate>
           <div class="paire">
-            <div class="champ">
-              <label for="c10-ref">Référence</label>
-              <input id="c10-ref" placeholder="SFC-">
+            <div class="champ" style="--part:2">
+              <label for="c10-cle">Code de retrait, référence ou téléphone</label>
+              <div class="saisie-action">
+                <input id="c10-cle" placeholder="Code, SFC-… ou +224…" autocomplete="off" data-cle-recherche>
+                <button class="bouton primaire" type="submit">Rechercher</button>
+              </div>
+              <span class="aide" data-cle-aide>Code à 6 chiffres, référence SFC-… ou téléphone +224…</span>
             </div>
             <div class="champ">
               <label for="c10-nom">Nom du client</label>
               <input id="c10-nom" placeholder="Rechercher…">
-            </div>
-            <div class="champ">
-              <label for="c10-tel">Téléphone</label>
-              <input id="c10-tel" placeholder="+224">
             </div>
           </div>
           <div class="paire">
@@ -1701,7 +1858,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
               <input id="c10-montant" placeholder="Indifférent">
             </div>
           </div>
-        </div>
+        </form>
       </section>
 
       <section class="carte">
@@ -1826,17 +1983,86 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
       </div>
     </section>
 
+    <!-- Écran créé sur retour client du 10/09 : la vue simple dont le caissier a besoin
+         pour son suivi du jour et de la semaine. Rien de plus — la recherche avancée et
+         les rapports financiers sont au back-office, pour le comptable. Aucun chiffre
+         n'est inventé : les lignes viennent de B1 et de C10, les totaux du jour de la
+         carte « Ma caisse » de B1 ; ceux de la semaine n'existent nulle part. -->
+    <section class="ecran" id="c14" data-nom="Mes transactions" data-node="(hors Figma)" data-rail="Transactions" data-titre="Mes transactions" data-contexte="Mamadou Camara · caisse 3 · seulement mes opérations" data-trancher="La semaine, ce sont les 7 derniers jours ou la semaine calendaire, du lundi au dimanche ? Les totaux de la semaine ne figurent nulle part dans le prototype : à fournir." data-fait="oui">
+      <div class="filtre">
+        <div class="segmente" data-choix="periode" role="group" aria-label="Période">
+          <button class="actif" data-valeur="jour">Jour</button>
+          <button data-valeur="semaine">Semaine</button>
+        </div>
+        <span class="secondaire" data-si-periode="jour">Jeudi 03/09/2026</span>
+        <span class="secondaire" data-si-periode="semaine">7 derniers jours · du 28/08 au 03/09/2026</span>
+      </div>
+
+      <div class="ligne">
+        <section class="carte">
+          <div class="bloc"><span>J'ai encaissé</span>
+            <b class="montant" data-si-periode="jour">112 400 000 GNF</b>
+            <b class="montant secondaire" data-si-periode="semaine">À charger</b>
+          </div>
+        </section>
+        <section class="carte">
+          <div class="bloc"><span>J'ai décaissé</span>
+            <b class="montant" data-si-periode="jour">84 900 000 GNF</b>
+            <b class="montant secondaire" data-si-periode="semaine">À charger</b>
+          </div>
+        </section>
+        <section class="carte">
+          <div class="bloc"><span>Opérations</span>
+            <b class="montant" data-si-periode="jour">37</b>
+            <b class="montant secondaire" data-si-periode="semaine">À charger</b>
+          </div>
+        </section>
+      </div>
+
+      <section class="carte">
+        <h2>Mes opérations</h2>
+        <div class="defilant">
+          <table class="tableau">
+            <thead>
+              <tr>
+                <th style="width:120px">Date</th><th style="width:150px">Référence</th>
+                <th style="width:90px">Type</th><th style="width:200px">Bénéficiaire</th>
+                <th style="width:170px">Montant</th><th style="width:175px">Statut</th>
+              </tr>
+            </thead>
+            <!-- Comme sur B1 : le prototype n'a qu'un écran de détail (C11), toutes les
+                 lignes y mènent. -->
+            <tbody>
+              <tr class="ouvrable" tabindex="0" data-cible="c11"><td>03/09 15:04</td><td>SFC-7C10-4482</td><td>Retrait</td><td>CAMARA Aïssata</td><td>5 000 000 GNF</td><td>Payée</td></tr>
+              <tr class="ouvrable" tabindex="0" data-cible="c11"><td>03/09 14:32</td><td>SFC-8F42-1907</td><td>Envoi</td><td>TOURÉ Mariam</td><td>5 045 000 GNF</td><td>En attente de retrait</td></tr>
+              <tr class="ouvrable" tabindex="0" data-cible="c11"><td>03/09 14:05</td><td>SFC-8F41-0932</td><td>Retrait</td><td>SOW Ibrahima</td><td>1 200 000 GNF</td><td>Payée</td></tr>
+              <tr class="ouvrable" tabindex="0" data-cible="c11"><td>03/09 13:48</td><td>SFC-8F39-7741</td><td>Envoi</td><td>SYLLA Ousmane</td><td>12 000 000 GNF</td><td>En attente de retrait</td></tr>
+              <tr class="ouvrable" tabindex="0" data-cible="c11"><td>03/09 13:31</td><td>SFC-8F37-2210</td><td>Retrait</td><td>KANTÉ Mory</td><td>850 000 GNF</td><td>Payée</td></tr>
+              <tr class="ouvrable" tabindex="0" data-cible="c11" data-si-periode="semaine"><td>28/08 09:12</td><td>SFC-8E77-3320</td><td>Envoi</td><td>KANTÉ Sira</td><td>850 000 GNF</td><td>Remboursée</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="pied">Seules mes opérations apparaissent ici. La recherche détaillée et les rapports financiers relèvent du back-office.</p>
+      </section>
+
+      <div class="actions a-droite">
+        <a class="bouton secondaire" href="#c10">Rechercher une opération</a>
+      </div>
+    </section>
+
 </div>
 
 <script>
 /*
-  Navigation par ancre : #b1 … #c12. Sans ancre, c'est l'accueil guichet (B1).
+  Navigation par ancre : #b1 … #c14. Sans ancre, c'est l'accueil guichet (B1).
   Le rail et la barre d'état sont pilotés par les attributs data-* de chaque écran :
   data-rail (entrée active), data-titre et data-contexte (barre d'état).
 */
+// Transactions ouvre l'historique du caissier (C14, retour client 10/09) ; la
+// recherche (C10) reste sous la même entrée, atteinte depuis C14 et depuis B1.
 const ENTREES = [
   ['Guichet', 'b1'], ['Envoyer', 'b2'], ['Payer', 'c1'],
-  ['Transactions', 'c10'], ['Caisse', 'b9'], ['Clients', null],
+  ['Transactions', 'c14'], ['Caisse', 'b9'], ['Clients', null],
 ];
 
 /*
@@ -1917,9 +2143,15 @@ const contenu = document.getElementById('contenu');
 */
 const ACCUEIL = 'b1';
 
+/*
+  Un écran peut n'être qu'un état d'un autre : data-alias désigne l'écran dont il
+  reprend le contenu, data-etat l'état dans lequel l'ouvrir. C'est le cas de C2, devenu
+  l'état d'erreur de C1 (retour client 10/09) : l'ancre #c2 reste valide.
+*/
 function afficher() {
   const code = location.hash.replace('#', '');
   const ecran = ecrans.find((e) => e.id === code) || ecrans.find((e) => e.id === ACCUEIL);
+  const source = ecrans.find((e) => e.id === ecran.dataset.alias) || ecran;
   document.body.classList.add('canevas');
 
   document.getElementById('barre-titre').textContent = ecran.dataset.titre;
@@ -1931,8 +2163,21 @@ function afficher() {
     return `<a class="item${actif}" ${href}><span class="puce"></span>${nom}</a>`;
   }).join('');
 
-  contenu.replaceChildren(...ecran.cloneNode(true).childNodes);
+  contenu.replaceChildren(...source.cloneNode(true).childNodes);
   if (ecran.dataset.etape) contenu.prepend(pasAPas(+ecran.dataset.etape));
+
+  // Le mode de réception suit le parcours ; les autres choix repartent de la maquette.
+  montrer('mode', modeReception);
+  if (modeReception !== 'especes' && contenu.querySelector('[data-vue]')) vueBenef('formulaire');
+  for (const groupe of contenu.querySelectorAll('[data-choix]')) {
+    const courant = groupe.dataset.choix === 'mode'
+      ? groupe.querySelector(`[data-valeur="${modeReception}"]`)
+      : groupe.querySelector('.actif');
+    if (courant) choisirSegment(courant);
+  }
+  relire();
+  etatRecherche(ecran.dataset.etat || 'saisie');
+
   const saisieEncaissement = contenu.querySelector('#b9-recu');
   if (saisieEncaissement) encaissement(saisieEncaissement);
   contenu.scrollTop = 0;
@@ -1987,23 +2232,96 @@ contenu.addEventListener('keydown', (e) => {
   if (ligne) ouvrirLigne(ligne.dataset.cible);
 });
 
+/*
+  Affichage conditionnel. Un élément porteur de data-si-<clé>="v1 v2" n'est visible
+  que si la valeur courante de <clé> figure dans sa liste. Clés : mode (de réception),
+  canal et format (reçus B11 et C9), periode (C14), etat (C1 : saisie ou erreur).
+*/
+function montrer(cle, valeur) {
+  for (const el of contenu.querySelectorAll(`[data-si-${cle}]`)) {
+    el.hidden = !el.getAttribute(`data-si-${cle}`).split(' ').includes(valeur);
+  }
+}
+
+/*
+  Mode de réception (retour client 10/09) : espèces en agence, wallet ou compte
+  bancaire. Il se choisit en B2 et vaut pour tout le parcours d'envoi : champs du
+  bénéficiaire (B7), relecture (B8), suite de l'encaissement (B9), reçu (B11),
+  confirmation (B13). Un écran ouvert par son ancre part des espèces.
+*/
+let modeReception = 'especes';
+
 // Choix du canal sur le reçu : imprimer, ou envoyer au client.
 const LIBELLE_CANAL = { imprimer: 'Imprimer', whatsapp: 'Envoyer le reçu' };
 
+/*
+  Choix segmentés : un groupe [data-choix="<clé>"], des boutons [data-valeur].
+  Chaque clé a son effet ; le bouton actif est rejoué à chaque affichage d'écran.
+*/
+const CHOIX = {
+  mode(valeur) {
+    modeReception = valeur;
+    montrer('mode', valeur);
+  },
+  canal(valeur) {
+    // Le format papier n'a pas de sens pour un envoi numérique, et inversement.
+    montrer('canal', valeur);
+    const action = contenu.querySelector('[data-action-canal]');
+    if (action) action.textContent = LIBELLE_CANAL[valeur];
+    apercuRecu();
+  },
+  format(valeur, bouton) {
+    const imprimante = contenu.querySelector('[data-champ-imprimante]');
+    if (imprimante) imprimante.value = bouton.dataset.imprimante;
+    montrer('format', valeur);
+    apercuRecu();
+  },
+  periode(valeur) {
+    montrer('periode', valeur);
+  },
+};
+
+function choisirSegment(bouton) {
+  const groupe = bouton.closest('[data-choix]');
+  for (const autre of groupe.querySelectorAll('[data-valeur]')) {
+    autre.classList.toggle('actif', autre === bouton);
+  }
+  CHOIX[groupe.dataset.choix](bouton.dataset.valeur, bouton);
+}
+
 contenu.addEventListener('click', (e) => {
-  const choix = e.target.closest('[data-canal]');
-  if (!choix) return;
-  for (const bouton of choix.parentElement.children) {
-    bouton.classList.toggle('actif', bouton === choix);
-  }
-  const canal = choix.dataset.canal;
-  // Le format papier n'a pas de sens pour un envoi numérique, et inversement.
-  for (const panneau of contenu.querySelectorAll('[data-panneau]')) {
-    panneau.hidden = panneau.dataset.panneau !== canal;
-  }
-  const action = contenu.querySelector('[data-action-canal]');
-  if (action) action.textContent = LIBELLE_CANAL[canal];
+  const bouton = e.target.closest('[data-choix] [data-valeur]');
+  if (bouton) choisirSegment(bouton);
 });
+
+/*
+  Aperçu du reçu. En ticket (58 ou 80 mm), un exemplaire : la réimpression est libre.
+  En A4, deux exemplaires l'un au-dessus de l'autre sur la même feuille, séparés par
+  un trait de coupe — le caissier garde l'un, le client emporte l'autre. L'envoi
+  numérique n'en porte qu'un, quel que soit le format.
+*/
+function apercuRecu() {
+  const recu = contenu.querySelector('[data-recu]');
+  if (!recu) return;
+  const valeur = (cle) => contenu.querySelector(`[data-choix="${cle}"] .actif`)?.dataset.valeur;
+  const double = valeur('format') === 'a4' && valeur('canal') !== 'whatsapp';
+
+  const [premier, ...clones] = recu.querySelectorAll('.exemplaire');
+  for (const surplus of [...clones, ...recu.querySelectorAll('.coupe')]) surplus.remove();
+  recu.classList.toggle('a4', double);
+  if (!double) return;
+
+  const [haut, bas] = recu.dataset.copies.split('|');
+  premier.querySelector('.copie').textContent = haut;
+  const second = premier.cloneNode(true);
+  second.querySelector('.copie').textContent = bas;
+  const coupe = document.createElement('div');
+  coupe.className = 'coupe';
+  coupe.setAttribute('role', 'separator');
+  coupe.setAttribute('aria-label', 'Trait de coupe');
+  coupe.textContent = '✂';
+  recu.append(coupe, second);
+}
 
 /*
   Bénéficiaire (B7) : soit on reprend un destinataire connu — le formulaire s'ouvre
@@ -2014,13 +2332,16 @@ function champBenef(nom) {
   return contenu.querySelector(`[data-benef="${nom}"]`);
 }
 
+/*
+  Chaque ligne de relecture nomme les champs qu'elle reprend : data-relu="nom prenom".
+  data-sep donne le séparateur quand il ne s'agit pas d'un simple espace.
+*/
 function relire() {
   const valeur = (nom) => (champBenef(nom) ? champBenef(nom).value.trim() : '');
-  const relu = contenu.querySelector('[data-relu-nom]');
-  const tel = contenu.querySelector('[data-relu-tel]');
-  if (!relu) return;
-  relu.textContent = `${valeur('nom')} ${valeur('prenom')}`.trim() || '—';
-  tel.textContent = valeur('tel') || '—';
+  for (const ligne of contenu.querySelectorAll('[data-relu]')) {
+    const parts = ligne.dataset.relu.split(' ').map(valeur).filter(Boolean);
+    ligne.textContent = parts.join(ligne.dataset.sep || ' ') || '—';
+  }
 }
 
 // La liste et le formulaire d'ajout s'excluent : on est dans l'un ou dans l'autre.
@@ -2068,19 +2389,124 @@ contenu.addEventListener('input', (e) => {
 });
 
 /*
-  Deux sélecteurs de démonstration, deux comportements distincts :
-  — le numéro de l'expéditeur (B4/B5/B6) identifie le client, donc il navigue aussitôt ;
-  — le code de retrait (C1) doit être cherché, donc il arme le bouton « Rechercher »
-    et laisse l'agent le déclencher.
+  Recherche d'une opération (retour client 10/09) : un seul champ accepte les trois
+  clés — code de retrait, référence d'opération, téléphone du bénéficiaire — et
+  reconnaît laquelle à la forme de la saisie. Aucun critère à choisir : l'agent tape
+  ce que le client lui donne, puis Entrée. Même champ en C1 (paiement) et en C10.
+*/
+function cleDe(saisie) {
+  const brut = saisie.trim().toUpperCase();
+  const chiffres = brut.replace(/\D/g, '');
+  if (brut.startsWith('SFC')) return 'reference';
+  if (/[A-Z]/.test(brut)) return null;
+  if (brut.startsWith('+') || chiffres.length >= 8) return 'telephone';
+  if (chiffres.length === 6) return 'code';
+  return null;
+}
+
+// Aide sous le champ, message d'erreur, bandeau de C2 : selon la clé reconnue.
+const CLES = {
+  code: {
+    aide: 'Code de retrait · reçu par SMS sur le téléphone du bénéficiaire',
+    erreur: 'Vérifier le SMS reçu par le bénéficiaire avant de resaisir',
+    titre: 'Code inconnu ou déjà utilisé',
+    texte: 'Aucune opération en attente de retrait ne correspond à ce code dans le réseau SAFICO.',
+  },
+  reference: {
+    aide: "Référence d'opération · figure sur le reçu de l'envoi",
+    erreur: 'Vérifier la référence sur le reçu avant de resaisir',
+    titre: 'Référence inconnue ou déjà payée',
+    texte: 'Aucune opération en attente de retrait ne correspond à cette référence dans le réseau SAFICO.',
+  },
+  telephone: {
+    aide: "Téléphone du bénéficiaire · quand aucun code n'a été reçu",
+    erreur: 'Vérifier le numéro avec le bénéficiaire avant de resaisir',
+    titre: 'Aucune opération pour ce numéro',
+    texte: "Aucune opération en attente de retrait n'est adressée à ce numéro dans le réseau SAFICO.",
+  },
+};
+const CLE_INCONNUE = {
+  aide: 'Code à 6 chiffres, référence SFC-… ou téléphone +224…',
+  erreur: 'Saisir un code à 6 chiffres, une référence SFC-… ou un téléphone',
+  titre: 'Saisie non reconnue',
+  texte: "Ce n'est ni un code de retrait, ni une référence d'opération, ni un numéro de téléphone.",
+};
+const textesCle = (saisie) => CLES[cleDe(saisie)] || CLE_INCONNUE;
+
+/*
+  Ce que la recherche de C1 sait retrouver : l'opération du scénario de paiement
+  (SFC-7C10-4482, par ses trois clés) et le code non payable du Figma. Toute autre
+  saisie mène à l'état d'erreur (#c2).
+*/
+const OPERATIONS_A_PAYER = [
+  { cible: 'c3', code: '842091', reference: 'SFC-7C10-4482', telephone: '66124088' },
+  { cible: 'c12', code: '841770' },
+];
+
+function trouver(saisie) {
+  const cle = cleDe(saisie);
+  // Tirets et espaces ne comptent pas : « sfc 7c10 4482 » vaut SFC-7C10-4482.
+  const alnum = (texte) => texte.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const chiffres = saisie.replace(/\D/g, '');
+  const operation = OPERATIONS_A_PAYER.find((o) =>
+    (cle === 'code' && o.code === chiffres)
+    || (cle === 'reference' && o.reference && alnum(o.reference) === alnum(saisie))
+    || (cle === 'telephone' && o.telephone && chiffres.endsWith(o.telephone)));
+  return operation ? operation.cible : 'c2';
+}
+
+// La dernière saisie sans résultat, reprise dans le champ de l'état d'erreur.
+let derniereRecherche = null;
+
+function aideRecherche(saisie, enErreur) {
+  const aide = saisie.closest('.champ').querySelector('[data-cle-aide]');
+  const textes = textesCle(saisie.value);
+  if (aide) aide.textContent = enErreur ? textes.erreur : textes.aide;
+}
+
+function etatRecherche(etat) {
+  const saisie = contenu.querySelector('[data-cle-recherche]');
+  if (!saisie) return;
+  montrer('etat', etat);
+  if (etat === 'erreur') {
+    saisie.value = derniereRecherche ?? saisie.dataset.erreurDemo;
+    saisie.closest('.champ').classList.replace('focus', 'erreur');
+    const textes = textesCle(saisie.value);
+    contenu.querySelector('[data-erreur-titre]').textContent = textes.titre;
+    contenu.querySelector('[data-erreur-texte]').textContent = textes.texte;
+  }
+  aideRecherche(saisie, etat === 'erreur');
+  // Au guichet, le curseur est déjà dans le champ ; après une erreur, la saisie est
+  // sélectionnée pour être retapée d'un geste.
+  if (saisie.closest('[data-recherche="retrait"]')) {
+    saisie.focus();
+    if (etat === 'erreur') saisie.select();
+  }
+}
+
+contenu.addEventListener('input', (e) => {
+  if (!e.target.matches('[data-cle-recherche]')) return;
+  e.target.closest('.champ').classList.replace('erreur', 'focus');
+  aideRecherche(e.target, false);
+});
+
+contenu.addEventListener('submit', (e) => {
+  const formulaire = e.target.closest('[data-recherche]');
+  if (!formulaire) return;
+  e.preventDefault();
+  // C10 reste figée : seule la recherche de paiement mène quelque part.
+  if (formulaire.dataset.recherche !== 'retrait') return;
+  derniereRecherche = formulaire.querySelector('[data-cle-recherche]').value;
+  const cible = trouver(derniereRecherche);
+  if (location.hash === '#' + cible) afficher();
+  else location.hash = cible;
+});
+
+/*
+  Le numéro de l'expéditeur (B4/B5/B6) est un sélecteur de démonstration : il
+  identifie le client, donc il navigue aussitôt.
 */
 contenu.addEventListener('change', (e) => {
-  const code = e.target.closest('[data-code]');
-  if (code) {
-    const action = contenu.querySelector('[data-code-action]');
-    if (action) action.setAttribute('href', '#' + code.selectedOptions[0].dataset.cible);
-    return;
-  }
-
   const expediteur = e.target.closest('[data-expediteur]');
   if (expediteur) {
     const cible = expediteur.selectedOptions[0].dataset.cible;
